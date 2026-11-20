@@ -25,6 +25,32 @@ class KVVParser(HTMLParser):
     def handle_data(self,data):
         if self.in_heading:self.parts.append(data)
 
+
+class PolicePageParser(HTMLParser):
+    def __init__(self):
+        super().__init__(); self.active=False; self.href=""; self.parts=[]; self.entries=[]
+    def handle_starttag(self,tag,attrs):
+        if tag=="a":
+            href=dict(attrs).get("href","")
+            if re.fullmatch(r"(?:https://www\\.presseportal\\.de)?/blaulicht/pm/110972/\\d+",href):
+                self.active=True; self.href=href; self.parts=[]
+    def handle_data(self,data):
+        if self.active:self.parts.append(data)
+    def handle_endtag(self,tag):
+        if tag=="a" and self.active:
+            title=" ".join("".join(self.parts).split())
+            if title.startswith("POL-KA:"):
+                url=self.href if self.href.startswith("https://") else "https://www.presseportal.de"+self.href
+                self.entries.append({"category":"polizei","title":title[:260],"url":url,"published":None})
+            self.active=False
+
+def police_fallback():
+    parser=PolicePageParser()
+    parser.feed(get("https://www.presseportal.de/blaulicht/nr/110972").decode("utf-8","replace"))
+    results=list({entry["url"]:entry for entry in parser.entries}.values())[:35]
+    if not results:raise ValueError("Police newsroom page contains no validated articles")
+    return results
+
 items=[];sources={}
 try:
     root=ET.fromstring(get("https://www.presseportal.de/rss/blaulicht/nr/110972"))
@@ -40,7 +66,14 @@ try:
     if not any(x["category"]=="polizei" for x in items):raise ValueError("RSS feed empty or changed")
     sources["polizei"]="ok"
 except Exception as exc:
-    sources["polizei"]="error";print("Police feed unavailable:",repr(exc))
+    print("Police RSS unavailable; trying newsroom fallback:",repr(exc))
+    try:
+        fallback=police_fallback()
+        items.extend(fallback)
+        sources["polizei"]="ok"
+        print("Police newsroom fallback:",len(fallback),"articles; publication times not verified")
+    except Exception as fallback_exc:
+        sources["polizei"]="error";print("Police newsroom fallback unavailable:",repr(fallback_exc))
 try:
     parser=KVVParser()
     parser.feed(get("https://www.kvv.de/fahrplan/verkehrsmeldungen.html").decode("utf-8","replace"))

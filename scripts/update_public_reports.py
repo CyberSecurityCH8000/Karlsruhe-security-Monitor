@@ -32,7 +32,7 @@ class PolicePageParser(HTMLParser):
     def handle_starttag(self,tag,attrs):
         if tag=="a":
             href=dict(attrs).get("href","")
-            if re.fullmatch(r"(?:https://www\\.presseportal\\.de)?/blaulicht/pm/110972/\\d+",href):
+            if re.fullmatch(r"(?:https://www\.presseportal\.de)?/blaulicht/pm/110972/\d+",href):
                 self.active=True; self.href=href; self.parts=[]
     def handle_data(self,data):
         if self.active:self.parts.append(data)

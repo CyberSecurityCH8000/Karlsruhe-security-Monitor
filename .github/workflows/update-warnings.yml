@@ -18,7 +18,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, urllib.request, datetime, pathlib
-          url = "https://warnung.bund.de/api31/dashboard/08212000.json"
+          url = "https://warnung.bund.de/api31/dashboard/082120000000.json"
           req = urllib.request.Request(url, headers={"User-Agent":"KarlsruheSecurityMonitor/1.0", "Accept":"application/json"})
           with urllib.request.urlopen(req, timeout=25) as response:
               data = json.load(response)

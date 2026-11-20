@@ -1,5 +1,6 @@
 import datetime as dt
 import json, pathlib, re, urllib.request
+from urllib.parse import urljoin
 from html.parser import HTMLParser
 from xml.etree import ElementTree as ET
 
@@ -32,7 +33,7 @@ class PolicePageParser(HTMLParser):
     def handle_starttag(self,tag,attrs):
         if tag=="a":
             href=dict(attrs).get("href","")
-            if re.fullmatch(r"(?:https://www\.presseportal\.de)?/blaulicht/pm/110972/\d+",href):
+            if re.search(r"/blaulicht/pm/110972/\d+",href):
                 self.active=True; self.href=href; self.parts=[]
     def handle_data(self,data):
         if self.active:self.parts.append(data)
@@ -40,7 +41,7 @@ class PolicePageParser(HTMLParser):
         if tag=="a" and self.active:
             title=" ".join("".join(self.parts).split())
             if title.startswith("POL-KA:"):
-                url=self.href if self.href.startswith("https://") else "https://www.presseportal.de"+self.href
+                url=urljoin("https://www.presseportal.de",self.href)
                 self.entries.append({"category":"polizei","title":title[:260],"url":url,"published":None})
             self.active=False
 
@@ -84,6 +85,17 @@ try:
     sources["verkehr"]="ok"
 except Exception as exc:
     sources["verkehr"]="error";print("KVV page unavailable:",repr(exc))
+previous_path=pathlib.Path("public-reports.json")
+if previous_path.exists():
+    try:
+        previous=json.loads(previous_path.read_text(encoding="utf-8"))
+        for category in ("polizei","verkehr"):
+            if sources.get(category)!="ok":
+                old=[dict(x,stale=True) for x in previous.get("items",[]) if x.get("category")==category]
+                items.extend(old[:35])
+                if old:sources[category]="stale"
+    except (ValueError,OSError,TypeError) as exc:
+        print("Previous snapshot unavailable:",repr(exc))
 if not items:raise SystemExit("No validated source available; preserving previous snapshot")
 pathlib.Path("public-reports.json").write_text(json.dumps({"updated_at":NOW.isoformat(),"sources":sources,"items":items},ensure_ascii=False,separators=(",",":")),encoding="utf-8")
 print("Published",len(items),"reports; source status",sources)

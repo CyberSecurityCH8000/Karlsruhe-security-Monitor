@@ -19,7 +19,7 @@ class KVVParser(HTMLParser):
     def handle_endtag(self,tag):
         if tag in ("h2","h3") and self.in_heading:
             title=" ".join("".join(self.parts).split())
-            if title and title not in ("Aktuelle Verkehrsmeldungen","Verkehrsmeldungen","Detail"):
+            if title and title not in ("Aktuelle Verkehrsmeldungen","Verkehrsmeldungen","Detail","Ergebnisse filtern"):
                 self.headings.append(title)
             self.in_heading=False
     def handle_data(self,data):
@@ -44,7 +44,7 @@ except Exception as exc:
 try:
     parser=KVVParser()
     parser.feed(get("https://www.kvv.de/fahrplan/verkehrsmeldungen.html").decode("utf-8","replace"))
-    titles=list(dict.fromkeys(x for x in parser.headings if len(x)>12 and x.lower() not in ("aktuelle verkehrsmeldungen","verkehrsmeldungen")))
+    titles=list(dict.fromkeys(x for x in parser.headings if len(x)>12 and x.lower() not in ("aktuelle verkehrsmeldungen","verkehrsmeldungen","ergebnisse filtern","filter","suchergebnisse","alle meldungen")))
     if not titles:raise ValueError("No KVV headings found")
     for title in titles[:30]:
         items.append({"category":"verkehr","title":title[:260],"url":"https://www.kvv.de/fahrplan/verkehrsmeldungen.html","published":None})

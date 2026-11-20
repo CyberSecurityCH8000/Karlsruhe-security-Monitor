@@ -40,7 +40,7 @@ class PolicePageParser(HTMLParser):
     def handle_endtag(self,tag):
         if tag=="a" and self.active:
             title=" ".join("".join(self.parts).split())
-            if title.startswith("POL-KA:"):
+            if title and (title.startswith("POL-KA:") or len(title)>25):
                 url=urljoin("https://www.presseportal.de",self.href)
                 self.entries.append({"category":"polizei","title":title[:260],"url":url,"published":None})
             self.active=False
@@ -62,7 +62,7 @@ try:
         raw=entry.findtext("pubDate") or ""
         try: published=parsedate_to_datetime(raw).astimezone(dt.timezone.utc).isoformat()
         except Exception: published=None
-        if title and url.startswith("https://www.presseportal.de/"):
+        if title and url.startswith(("https://www.presseportal.de/","http://www.presseportal.de/")):
             items.append({"category":"polizei","title":title[:260],"url":url,"published":published})
     if not any(x["category"]=="polizei" for x in items):raise ValueError("RSS feed empty or changed")
     sources["polizei"]="ok"

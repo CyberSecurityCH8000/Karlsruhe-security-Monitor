@@ -86,7 +86,7 @@ function searchCountries(){
 }
 countrySearchBox.addEventListener('input',searchCountries);
 const countryPanel=document.querySelector('#countryPanel');
-function countryLabel(props){return String(props.ADMIN||props.NAME_DE||props.NAME||props.name||'Unbekanntes Land')}
+function countryLabel(props){return String(props.NAME_DE||props.NAME_DEU||props.ADMIN_DE||props.ADMIN||props.NAME||props.name||'Unbekanntes Land')}
 function inCountry(point,shape){try{const rings=shape.geometry.type==='Polygon'?[shape.geometry.coordinates]:shape.geometry.type==='MultiPolygon'?shape.geometry.coordinates:[];const x=point[1],y=point[0];for(const polygon of rings){const ring=polygon[0];let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))inside=!inside}if(inside)return true}}catch(e){}return false}
 function selectCountry(feature){selectedCountry=feature;renderSelectedCountry(true)}
 function renderSelectedCountry(scroll){

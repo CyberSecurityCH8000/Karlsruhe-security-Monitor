@@ -80,13 +80,18 @@ document.querySelector('#countryMapStatus').before(countrySearchBox,countrySearc
 function searchCountries(){
  countrySearchResults.replaceChildren();
  const query=countrySearchBox.value.trim().toLocaleLowerCase('de-DE');if(query.length<2)return;
- const hits=countryShapes.filter(f=>{const p=f.properties||{};return [p.ADMIN,p.NAME,p.NAME_DE,p.SOVEREIGNT,p.ISO_A3].some(v=>String(v||'').toLocaleLowerCase('de-DE').includes(query))}).slice(0,12);
+ const hits=countryShapes.filter(f=>{const p=f.properties||{};return [countryLabel(p),p.ADMIN,p.NAME,p.NAME_DE,p.SOVEREIGNT,p.ISO_A3].some(v=>String(v||'').toLocaleLowerCase('de-DE').includes(query))}).slice(0,12);
  for(const f of hits){const b=document.createElement('button');b.type='button';b.textContent=countryLabel(f.properties||{});b.onclick=()=>{countrySearchBox.value=countryLabel(f.properties||{});countrySearchResults.replaceChildren();selectCountry(f);const layer=countryLayer?.getLayers().find(l=>l.feature===f);if(layer)map.fitBounds(layer.getBounds(),{maxZoom:7,padding:[20,20]})};countrySearchResults.append(b)}
  if(!hits.length){const p=document.createElement('p');p.textContent='Kein Land gefunden. Bitte anderen Namen probieren.';countrySearchResults.append(p)}
 }
 countrySearchBox.addEventListener('input',searchCountries);
 const countryPanel=document.querySelector('#countryPanel');
-function countryLabel(props){return String(props.NAME_DE||props.NAME_DEU||props.ADMIN_DE||props.ADMIN||props.NAME||props.name||'Unbekanntes Land')}
+const germanRegionNames=new Intl.DisplayNames(['de'],{type:'region'});
+function countryLabel(props){
+ const code=String(props.ISO_A2||props.ISO_A2_EH||'').toUpperCase();
+ if(/^[A-Z]{2}$/.test(code)){try{const translated=germanRegionNames.of(code);if(translated&&translated!==code)return translated}catch(e){}}
+ return String(props.NAME_DE||props.NAME_DEU||props.ADMIN_DE||props.ADMIN||props.NAME||props.name||'Unbekanntes Land');
+}
 function inCountry(point,shape){try{const rings=shape.geometry.type==='Polygon'?[shape.geometry.coordinates]:shape.geometry.type==='MultiPolygon'?shape.geometry.coordinates:[];const x=point[1],y=point[0];for(const polygon of rings){const ring=polygon[0];let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))inside=!inside}if(inside)return true}}catch(e){}return false}
 function selectCountry(feature){selectedCountry=feature;renderSelectedCountry(true)}
 function renderSelectedCountry(scroll){

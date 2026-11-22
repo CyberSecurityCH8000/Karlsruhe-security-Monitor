@@ -54,7 +54,7 @@ def police_fallback():
     parser = PolicePageParser()
     parser.feed(page)
     # Newsroom article titles are also exposed in structured data on some page versions.
-    for script in re.findall(r'<script[^>]+type=["\\\']application/ld\\+json["\\\'][^>]*>(.*?)</script>', page, re.S | re.I):
+    for script in re.findall(r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', page, re.S | re.I):
         try: nodes = json.loads(html.unescape(script))
         except (ValueError, TypeError): continue
         def visit(node):

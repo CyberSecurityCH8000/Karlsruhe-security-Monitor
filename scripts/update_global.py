@@ -26,12 +26,12 @@ for f in data["features"]:
             continue
     except (TypeError, ValueError):
         continue
-    events.append({"id": str(p.get("eventid") or f.get("id") or "")[:100],
+    raw_url = p.get("url")\n    if isinstance(raw_url, dict):\n        raw_url = raw_url.get("report") or raw_url.get("details") or ""\n    if not isinstance(raw_url, str) or not raw_url.startswith("https://www.gdacs.org/"):\n        raw_url = "https://www.gdacs.org/"\n    events.append({"id": str(p.get("eventid") or f.get("id") or "")[:100],
                    "type": str(p.get("eventtype") or "")[:30],
                    "title": str(p.get("name") or p.get("description") or "GDACS Ereignis")[:250],
                    "level": str(p.get("alertlevel") or "unknown")[:30],
                    "lat": lat, "lon": lon,
-                   "url": str(p.get("url") or "https://www.gdacs.org/")[:500]})
+                   "url": raw_url[:500]})
 output = {"updated_at": dt.datetime.now(dt.timezone.utc).isoformat(), "source": URL, "events": events[:500]}
 pathlib.Path("global-disasters.json").write_text(json.dumps(output, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 print(f"GDACS events: {len(events)}")

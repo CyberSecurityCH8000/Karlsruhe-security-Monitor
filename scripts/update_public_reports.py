@@ -37,7 +37,7 @@ class PolicePageParser(HTMLParser):
     def handle_starttag(self, tag, attrs):
         if tag != "a": return
         href = dict(attrs).get("href", "")
-        if re.search(r"/blaulicht/pm/110972/\\d+", href):
+        if re.search(r"/blaulicht/pm/110972/\d+", href):
             self.href = urljoin("https://www.presseportal.de", href)
             self.parts = []
     def handle_data(self, data):
@@ -64,7 +64,7 @@ def police_fallback():
                 url = node.get("url") or node.get("mainEntityOfPage")
                 if isinstance(url, dict): url = url.get("@id")
                 title = node.get("headline") or node.get("name")
-                if isinstance(url,str) and isinstance(title,str) and re.search(r"presseportal\\.de/blaulicht/pm/110972/\\d+",url):
+                if isinstance(url,str) and isinstance(title,str) and re.search(r"presseportal\.de/blaulicht/pm/110972/\d+",url):
                     parser.entries.append({"category":"polizei","title":title[:260],"url":url,"published":node.get("datePublished")})
                 for child in node.values():
                     if isinstance(child,(dict,list)): visit(child)

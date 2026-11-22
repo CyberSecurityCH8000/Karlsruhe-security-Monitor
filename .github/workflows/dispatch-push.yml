@@ -15,5 +15,5 @@ jobs:
           curl --fail --show-error --silent --retry 2 --max-time 180 \
             -X POST 'https://luxiicqyioqgjhdxgfyz.supabase.co/functions/v1/security-push' \
             -H 'Content-Type: application/json' \
-            -H "x-dispatch-secret: \${{ secrets.SECURITY_PUSH_DISPATCH_SECRET }}" \
+            -H "x-dispatch-secret: ${{ secrets.SECURITY_PUSH_DISPATCH_SECRET }}" \
             --data '{"action":"dispatch"}'

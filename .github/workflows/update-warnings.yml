@@ -36,9 +36,9 @@ jobs:
       - name: Bundesweite DWD-Warnungen laden
         run: python3 scripts/update_germany.py
       - name: Weltweite GDACS-Katastrophenmeldungen laden
-        run: python3 scripts/update_global.py
+        run: python3 scripts/update_global.py || echo 'GDACS aktuell nicht erreichbar; letzte geprüfte Daten bleiben bestehen'
       - name: Offizielle Reisehinweis-Aktualisierungen laden
-        run: python3 scripts/update_travel.py
+        run: python3 scripts/update_travel.py || echo 'Reisehinweis-Feed aktuell nicht erreichbar; letzte geprüfte Daten bleiben bestehen'
       - name: Geprüfte Daten veröffentlichen
         run: |
           if ! git diff --quiet -- warnings.json germany.json global-disasters.json travel-updates.json || [ -n "$(git ls-files --others --exclude-standard warnings.json germany.json global-disasters.json travel-updates.json)" ]; then

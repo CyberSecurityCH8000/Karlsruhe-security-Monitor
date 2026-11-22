@@ -118,6 +118,15 @@ function renderSelectedCountry(scroll){
  countryPanel.append(riskText);
  const securityHeading=document.createElement('h4');securityHeading.textContent='🛡️ Krieg, Terror, Entführung, Unruhen';countryPanel.append(securityHeading);
  const securityText=document.createElement('p');securityText.textContent='Diese Gefahren werden derzeit NICHT automatisch und vollständig für jedes Land bewertet. Amtliche Ländertexte enthalten regionale Einschränkungen und Sicherheitsratschläge. Keine automatische Entwarnung.';countryPanel.append(securityText);
+ const crisisHeading=document.createElement('h4');crisisHeading.textContent='📰 Internationale Konflikt- und Krisenberichte';countryPanel.append(crisisHeading);
+ const crisisNotice=document.createElement('p');crisisNotice.textContent='Weitere geprüfte Primärquellen für das gewählte Land. Diese externen Berichte sind keine vollständige automatische Konflikterkennung und keine Echtzeit-Reisefreigabe.';countryPanel.append(crisisNotice);
+ const crisisSources=[
+  ['UN OCHA ReliefWeb: aktuelle humanitäre Lageberichte','https://reliefweb.int/updates?search='+encodeURIComponent(name)],
+  ['UNHCR: Flucht- und Vertreibungslage','https://www.unhcr.org/emergencies'],
+  ['WHO: internationale Gesundheitsnotlagen','https://www.who.int/emergencies/disease-outbreak-news'],
+  ['UN: internationale Nachrichten und Krisen','https://news.un.org/en/']
+ ];
+ for(const [label,url] of crisisSources){const p=document.createElement('p'),a=document.createElement('a');a.textContent=label;a.href=url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);countryPanel.append(p)}
  const links=[['🇩🇪 Auswärtiges Amt: Länder- und Reisewarnungen','https://www.auswaertiges-amt.de/de/ReiseUndSicherheit/reise-und-sicherheitshinweise'],['🇨🇭 EDA: Schweizer Reisehinweise','https://www.eda.admin.ch/eda/de/home/vertretungen-und-reisehinweise/reisehinweise-fuer-das-ausland.html'],['🌍 GDACS: internationale Katastrophen','https://www.gdacs.org/']];
  for(const [label,url] of links){const p=document.createElement('p'),a=document.createElement('a');a.textContent=label;a.href=url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);countryPanel.append(p)}
  document.querySelector('#travelSearch').value=name;renderTravel();

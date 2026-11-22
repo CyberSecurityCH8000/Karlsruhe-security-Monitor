@@ -33,12 +33,14 @@ jobs:
           pathlib.Path("warnings.json").write_text(json.dumps(output,ensure_ascii=False,separators=(",",":")),encoding="utf-8")
           print(f"Validated {len(data)} warnings")
           PY
+      - name: Bundesweite DWD-Warnungen laden
+        run: python3 scripts/update_germany.py
       - name: Geprüfte Daten veröffentlichen
         run: |
-          if ! git diff --quiet -- warnings.json || [ -n "$(git ls-files --others --exclude-standard warnings.json)" ]; then
+          if ! git diff --quiet -- warnings.json germany.json || [ -n "$(git ls-files --others --exclude-standard warnings.json germany.json)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add warnings.json
+            git add warnings.json germany.json
             git commit -m "Update amtliche Warnungen"
             for attempt in 1 2 3 4 5; do
               git pull --rebase origin main

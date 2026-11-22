@@ -16,7 +16,7 @@ async function loadTravel(){
  const d=await r.json(),age=Date.now()-Date.parse(d.updated_at);
  if(!Array.isArray(d.updates)||!Number.isFinite(age)||age< -300000||age>86400000)throw Error('Veralteter Änderungsfeed');
  travelUpdates=d.updates.filter(x=>typeof x.title==='string'&&typeof x.url==='string'&&x.url.startsWith('https://www.auswaertiges-amt.de/'));
- status.textContent='Amtliche Reisehinweis-Änderungen · '+travelUpdates.length+' Einträge · Abruf '+new Date(d.updated_at).toLocaleString('de-DE')+' · keine vollständige Reisewarnungsliste';renderTravel();
+ status.textContent='Amtliche Reisehinweis-Änderungen · '+travelUpdates.length+' Einträge · Abruf '+new Date(d.updated_at).toLocaleString('de-DE')+' · keine vollständige Reisewarnungsliste';renderTravel();if(selectedCountry)renderSelectedCountry(false);
  }catch(e){travelUpdates=[];renderTravel();status.textContent='⚠️ Reisehinweis-Änderungen nicht aktuell verfügbar. Bitte die offiziellen Länderlisten unten direkt öffnen.'}
 }
 document.querySelector('#travelSearch').addEventListener('input',renderTravel);
@@ -41,7 +41,7 @@ async function loadGdacs(){
    a.textContent='Originalquelle';a.href=typeof event.url==='string'&&event.url.startsWith('https://www.gdacs.org/')?event.url:'https://www.gdacs.org/';
    a.target='_blank';a.rel='noopener noreferrer';article.append(b,p,a);panel.append(article);
   }
-  status.textContent='GDACS weltweit · '+data.events.length+' Ereignisse · Stand '+new Date(data.updated_at).toLocaleString('de-DE');
+  status.textContent='GDACS weltweit · '+data.events.length+' Ereignisse · Stand '+new Date(data.updated_at).toLocaleString('de-DE');if(selectedCountry)renderSelectedCountry(false);
  }catch(e){gdacsLayer.clearLayers();panel.replaceChildren();status.textContent='⚠️ GDACS-Weltdaten nicht aktuell verfügbar. Bitte gdacs.org direkt prüfen.'}
 }
 loadGdacs();setInterval(()=>{if(!document.hidden)loadGdacs()},300000);
@@ -67,7 +67,7 @@ async function loadWorld(){
    a.textContent='Originalmeldung';a.href=typeof prop.url==='string'&&prop.url.startsWith('https://earthquake.usgs.gov/')?prop.url:'https://earthquake.usgs.gov/';a.target='_blank';a.rel='noopener noreferrer';
    el.append(b,p,a);panel.append(el);
   }
-  status.textContent='USGS weltweit · '+features.length+' Erdbeben ab M4,5 in 24 Stunden · Stand '+new Date(updated).toLocaleString('de-DE');
+  status.textContent='USGS weltweit · '+features.length+' Erdbeben ab M4,5 in 24 Stunden · Stand '+new Date(updated).toLocaleString('de-DE');if(selectedCountry)renderSelectedCountry(false);
  }catch(e){worldLayer.clearLayers();panel.replaceChildren();status.textContent='⚠️ Weltweite USGS-Daten derzeit nicht verfügbar oder veraltet. Bitte earthquake.usgs.gov direkt prüfen.'}
 }
 document.querySelector('#worldRefresh').onclick=loadWorld;
@@ -77,16 +77,33 @@ let selectedCountry=null,countryLayer=null,countryShapes=[];
 const countryPanel=document.querySelector('#countryPanel');
 function countryLabel(props){return String(props.ADMIN||props.NAME_DE||props.NAME||props.name||'Unbekanntes Land')}
 function inCountry(point,shape){try{const rings=shape.geometry.type==='Polygon'?[shape.geometry.coordinates]:shape.geometry.type==='MultiPolygon'?shape.geometry.coordinates:[];const x=point[1],y=point[0];for(const polygon of rings){const ring=polygon[0];let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))inside=!inside}if(inside)return true}}catch(e){}return false}
-function selectCountry(feature){
- selectedCountry=feature;const name=countryLabel(feature.properties||{});
- countryPanel.replaceChildren();const title=document.createElement('h3');title.textContent='📍 '+name;countryPanel.append(title);
- const description=document.createElement('p');description.textContent='Gefilterte öffentliche Ereignisse – keine vollständige Sicherheitslage und keine automatische Entwarnung.';countryPanel.append(description);
- let count=0;
- for(const layer of [gdacsLayer,worldLayer])layer.eachLayer(marker=>{const pos=marker.getLatLng();if(inCountry([pos.lat,pos.lng],feature)){count++;const p=document.createElement('p');p.textContent=marker.getPopup()?.getContent()?.textContent||'Ereignis in dieser Region';countryPanel.append(p)}});
- if(!count){const p=document.createElement('p');p.textContent='Keine passenden Ereignisse in den derzeit geladenen Kartenfeeds. Das bedeutet NICHT, dass das Land sicher ist.';countryPanel.append(p)}
- const a=document.createElement('a');a.textContent='Offizielle Reisewarnungen für '+name+' prüfen';a.href='https://www.auswaertiges-amt.de/de/ReiseUndSicherheit/reise-und-sicherheitshinweise';a.target='_blank';a.rel='noopener noreferrer';countryPanel.append(a);
+function selectCountry(feature){selectedCountry=feature;renderSelectedCountry(true)}
+function renderSelectedCountry(scroll){
+ if(!selectedCountry)return;
+ const feature=selectedCountry,name=countryLabel(feature.properties||{});
+ countryPanel.replaceChildren();
+ const title=document.createElement('h3');title.textContent='📍 '+name;countryPanel.append(title);
+ const notice=document.createElement('p');notice.textContent='Lageauszug aus aktuell geladenen Quellen. Die Auswahl allein bewertet weder Kriegs- noch Terror- oder Reiserisiken vollständig.';countryPanel.append(notice);
+ const headings=[['🌪️ Katastrophen (GDACS)',gdacsLayer],['🌎 Erdbeben (USGS)',worldLayer]];
+ let total=0;
+ for(const [label,layer] of headings){
+  const heading=document.createElement('h4');heading.textContent=label;countryPanel.append(heading);
+  let found=0;
+  layer.eachLayer(marker=>{const pos=marker.getLatLng();if(inCountry([pos.lat,pos.lng],feature)){
+   found++;total++;const p=document.createElement('p');p.textContent=marker.getPopup()?.getContent()?.textContent||'Ereignis in dieser Region';countryPanel.append(p);
+  }});
+  if(!found){const p=document.createElement('p');p.textContent='Keine Ereignisse im aktuell geladenen Feed';countryPanel.append(p)}
+ }
+ const warning=document.createElement('p');warning.textContent='⚠️ Keine Meldung bedeutet NICHT, dass das Land sicher ist. Krieg, Terror, Entführungen und lokale Sicherheitsrisiken müssen anhand der amtlichen Länderberichte geprüft werden.';countryPanel.append(warning);
+ const travelHeading=document.createElement('h4');travelHeading.textContent='✈️ Reisewarnungen und Sicherheitslage';countryPanel.append(travelHeading);
+ const term=name.toLocaleLowerCase('de-DE');
+ const updates=travelUpdates.filter(x=>String(x.title).toLocaleLowerCase('de-DE').includes(term)).slice(0,8);
+ if(updates.length){for(const item of updates){const a=document.createElement('a');a.textContent=item.title;a.href=item.url;a.target='_blank';a.rel='noopener noreferrer';countryPanel.append(a,document.createElement('p'))}}
+ else{const p=document.createElement('p');p.textContent='Keine passende neue Änderung im deutschen Reisehinweis-Feed. Bestehende Reisewarnungen sind damit NICHT ausgeschlossen.';countryPanel.append(p)}
+ const links=[['🇩🇪 Auswärtiges Amt: Länder- und Reisewarnungen','https://www.auswaertiges-amt.de/de/ReiseUndSicherheit/reise-und-sicherheitshinweise'],['🇨🇭 EDA: Schweizer Reisehinweise','https://www.eda.admin.ch/eda/de/home/vertretungen-und-reisehinweise/reisehinweise-fuer-das-ausland.html'],['🌍 GDACS: internationale Katastrophen','https://www.gdacs.org/']];
+ for(const [label,url] of links){const p=document.createElement('p'),a=document.createElement('a');a.textContent=label;a.href=url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);countryPanel.append(p)}
  document.querySelector('#travelSearch').value=name;renderTravel();
- countryPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
+ if(scroll)countryPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 async function loadCountryBorders(){
  const status=document.querySelector('#countryMapStatus');

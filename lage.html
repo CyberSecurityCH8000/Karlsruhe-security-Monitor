@@ -100,6 +100,13 @@ function renderSelectedCountry(scroll){
  const updates=travelUpdates.filter(x=>String(x.title).toLocaleLowerCase('de-DE').includes(term)).slice(0,8);
  if(updates.length){for(const item of updates){const a=document.createElement('a');a.textContent=item.title;a.href=item.url;a.target='_blank';a.rel='noopener noreferrer';countryPanel.append(a,document.createElement('p'))}}
  else{const p=document.createElement('p');p.textContent='Keine passende neue Änderung im deutschen Reisehinweis-Feed. Bestehende Reisewarnungen sind damit NICHT ausgeschlossen.';countryPanel.append(p)}
+ const travelAlerts=travelUpdates.filter(x=>String(x.title).toLocaleLowerCase('de-DE').includes(term)&&/reisewarnung|teilreisewarnung/i.test(x.title));
+ const riskHeading=document.createElement('h4');riskHeading.textContent='⚠️ Offizieller Warnstatus';countryPanel.append(riskHeading);
+ const riskText=document.createElement('p');
+ riskText.textContent=travelAlerts.length?'Im aktuellen Änderungsfeed steht ausdrücklich „Reisewarnung“ oder „Teilreisewarnung“. Prüfe Umfang, Regionen und Gültigkeit im Originaltext.':'Warnstatus nicht abschließend ermittelt. Der Änderungsfeed enthält nicht alle bestehenden Reisewarnungen. Bitte den vollständigen amtlichen Länderhinweis prüfen.';
+ countryPanel.append(riskText);
+ const securityHeading=document.createElement('h4');securityHeading.textContent='🛡️ Krieg, Terror, Entführung, Unruhen';countryPanel.append(securityHeading);
+ const securityText=document.createElement('p');securityText.textContent='Diese Gefahren werden derzeit NICHT automatisch und vollständig für jedes Land bewertet. Amtliche Ländertexte enthalten regionale Einschränkungen und Sicherheitsratschläge. Keine automatische Entwarnung.';countryPanel.append(securityText);
  const links=[['🇩🇪 Auswärtiges Amt: Länder- und Reisewarnungen','https://www.auswaertiges-amt.de/de/ReiseUndSicherheit/reise-und-sicherheitshinweise'],['🇨🇭 EDA: Schweizer Reisehinweise','https://www.eda.admin.ch/eda/de/home/vertretungen-und-reisehinweise/reisehinweise-fuer-das-ausland.html'],['🌍 GDACS: internationale Katastrophen','https://www.gdacs.org/']];
  for(const [label,url] of links){const p=document.createElement('p'),a=document.createElement('a');a.textContent=label;a.href=url;a.target='_blank';a.rel='noopener noreferrer';p.append(a);countryPanel.append(p)}
  document.querySelector('#travelSearch').value=name;renderTravel();

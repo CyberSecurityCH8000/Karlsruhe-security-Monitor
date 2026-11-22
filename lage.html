@@ -74,6 +74,17 @@ document.querySelector('#worldRefresh').onclick=loadWorld;
 loadWorld();setInterval(()=>{if(!document.hidden)loadWorld()},300000);
 
 let selectedCountry=null,countryLayer=null,countryShapes=[];
+const countrySearchBox=document.createElement('input');countrySearchBox.type='search';countrySearchBox.placeholder='Land suchen, z. B. Schweiz, Sudan';countrySearchBox.setAttribute('aria-label','Land auf Weltkarte suchen');
+const countrySearchResults=document.createElement('div');countrySearchResults.id='countrySearchResults';
+document.querySelector('#countryMapStatus').before(countrySearchBox,countrySearchResults);
+function searchCountries(){
+ countrySearchResults.replaceChildren();
+ const query=countrySearchBox.value.trim().toLocaleLowerCase('de-DE');if(query.length<2)return;
+ const hits=countryShapes.filter(f=>{const p=f.properties||{};return [p.ADMIN,p.NAME,p.NAME_DE,p.SOVEREIGNT,p.ISO_A3].some(v=>String(v||'').toLocaleLowerCase('de-DE').includes(query))}).slice(0,12);
+ for(const f of hits){const b=document.createElement('button');b.type='button';b.textContent=countryLabel(f.properties||{});b.onclick=()=>{countrySearchBox.value=countryLabel(f.properties||{});countrySearchResults.replaceChildren();selectCountry(f);const layer=countryLayer?.getLayers().find(l=>l.feature===f);if(layer)map.fitBounds(layer.getBounds(),{maxZoom:7,padding:[20,20]})};countrySearchResults.append(b)}
+ if(!hits.length){const p=document.createElement('p');p.textContent='Kein Land gefunden. Bitte anderen Namen probieren.';countrySearchResults.append(p)}
+}
+countrySearchBox.addEventListener('input',searchCountries);
 const countryPanel=document.querySelector('#countryPanel');
 function countryLabel(props){return String(props.ADMIN||props.NAME_DE||props.NAME||props.name||'Unbekanntes Land')}
 function inCountry(point,shape){try{const rings=shape.geometry.type==='Polygon'?[shape.geometry.coordinates]:shape.geometry.type==='MultiPolygon'?shape.geometry.coordinates:[];const x=point[1],y=point[0];for(const polygon of rings){const ring=polygon[0];let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))inside=!inside}if(inside)return true}}catch(e){}return false}
@@ -120,7 +131,7 @@ async function loadCountryBorders(){
   const data=await response.json();if(data.type!=='FeatureCollection'||!Array.isArray(data.features))throw Error('Ungültige Ländergrenzen');
   countryShapes=data.features;
   countryLayer=L.geoJSON(data,{style:{color:'#64a8ff',weight:1,fillOpacity:0.035},onEachFeature:(feature,layer)=>{layer.on('click',()=>selectCountry(feature));layer.bindTooltip(countryLabel(feature.properties||{}),{sticky:true})}}).addTo(map);
-  status.textContent='Länderauswahl aktiv · '+data.features.length+' Gebiete · Grenzen schematisch (Natural Earth), nicht für Grenzstreitigkeiten geeignet.';
+  searchCountries();status.textContent='Länderauswahl aktiv · '+data.features.length+' Gebiete · Grenzen schematisch (Natural Earth), nicht für Grenzstreitigkeiten geeignet.';
  }catch(e){status.textContent='⚠️ Ländergrenzen derzeit nicht verfügbar. Karte bleibt zoombar, Länder können über die Reisewarnungsquellen gesucht werden.'}
 }
 loadCountryBorders();

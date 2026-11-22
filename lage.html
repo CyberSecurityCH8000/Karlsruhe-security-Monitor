@@ -19,7 +19,7 @@ function notifyNewDwdWarnings(items){
  if(!selected.length)return;
  navigator.serviceWorker?.ready.then(r=>r.showNotification('Neue amtliche DWD-Warnungen',{body:selected.length+' neue Wetterwarnung(en) bundesweit. Sicherheitsmonitor für Details öffnen.',tag:'dwd-updates',icon:'./icon.svg',data:{url:'./lage.html'}})).catch(()=>{});
 }
-// Notifications are explicitly limited to foreground sessions until the Web Push backend is deployed.
+// Foreground DWD notices complement server-sent Web Push; background delivery requires active subscription.
 
 const PUSH_ENDPOINT="https://luxiicqyioqgjhdxgfyz.supabase.co/functions/v1/security-push";
 const PUSH_PUBLIC="BN2cBOlM5zx1JHx0oKqbujb7D8fG47khMRpePRMwBjG3b17bdOdYMR_jxcpwFsJsf5Av_XbfVXLvDISUOz9D48A";
@@ -32,7 +32,7 @@ async function registerPush(){
  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64ToBytes(PUSH_PUBLIC)});
  const r=await fetch(PUSH_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'subscribe',subscription:sub.toJSON(),region:'de'})});
  if(!r.ok)throw Error('Serverregistrierung fehlgeschlagen (HTTP '+r.status+')');
- notifyState.textContent='Hintergrund-Push für bundesweite DWD-Unwetterwarnungen registriert. Zustellung noch nicht durch einen echten Server-Push-Test bestätigt.';
+ notifyState.textContent='Hintergrund-Push für bundesweite DWD-Unwetterwarnungen registriert. Ein echter Server-Push wurde am 22.11.2026 erfolgreich auf einem Android-Gerät empfangen. Die Zustellung weiterer Warnungen ist nicht garantiert.';
 }
 const notifyState=document.querySelector('#notifyState');
 const notificationSupported=('Notification' in window)&&('serviceWorker' in navigator)&&window.isSecureContext;

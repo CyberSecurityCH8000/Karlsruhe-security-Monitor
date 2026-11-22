@@ -120,6 +120,12 @@ function renderSelectedCountry(scroll){
  const securityText=document.createElement('p');securityText.textContent='Diese Gefahren werden derzeit NICHT automatisch und vollständig für jedes Land bewertet. Amtliche Ländertexte enthalten regionale Einschränkungen und Sicherheitsratschläge. Keine automatische Entwarnung.';countryPanel.append(securityText);
  const crisisHeading=document.createElement('h4');crisisHeading.textContent='📰 Internationale Konflikt- und Krisenberichte';countryPanel.append(crisisHeading);
  const crisisNotice=document.createElement('p');crisisNotice.textContent='Weitere geprüfte Primärquellen für das gewählte Land. Diese externen Berichte sind keine vollständige automatische Konflikterkennung und keine Echtzeit-Reisefreigabe.';countryPanel.append(crisisNotice);
+ const crisisFilter=document.createElement('div');crisisFilter.className='tile';
+ const crisisHint=document.createElement('p');crisisHint.textContent='Die Quellen werden im Original geöffnet. Ihre Inhalte sind nicht automatisch als aktuelle Konfliktmeldungen verifiziert.';crisisFilter.append(crisisHint);
+ const conflictQuery=document.createElement('a');conflictQuery.textContent='ReliefWeb: aktuelle Meldungen für '+name;
+ conflictQuery.href='https://reliefweb.int/updates?search='+encodeURIComponent(name);
+ conflictQuery.target='_blank';conflictQuery.rel='noopener noreferrer';crisisFilter.append(conflictQuery);
+ countryPanel.append(crisisFilter);
  const crisisSources=[
   ['UN OCHA ReliefWeb: aktuelle humanitäre Lageberichte','https://reliefweb.int/updates?search='+encodeURIComponent(name)],
   ['UNHCR: Flucht- und Vertreibungslage','https://www.unhcr.org/emergencies'],

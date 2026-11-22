@@ -1,0 +1,18 @@
+name: Push-Unwetterwarnungen prüfen
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Amtliche DWD-Warnungen prüfen und neue Warnungen senden
+        run: |
+          curl --fail --show-error --silent --retry 2 --max-time 180 \
+            -X POST 'https://luxiicqyioqgjhdxgfyz.supabase.co/functions/v1/security-push' \
+            -H 'Content-Type: application/json' \
+            --data '{"action":"dispatch"}'
